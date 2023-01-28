@@ -35,8 +35,6 @@ const main = async () => {
 
 main()
 .then((res) => {
-    console.log(String(res));
-    console.debug(`Completed main: ${JSON.stringify(process.argv)}.`);
     return res ? 0 : 1
 })
 .catch(error => {

@@ -1,5 +1,11 @@
 const OPTIONS = Array(1,2,3,4,5,6,7,8,9);
 
+function Print(b) {
+    b.forEach((row) => {
+        console.log(Array(...row).join(" "));
+    })
+}
+
 
 function *iter_rc() {
     for (var r = 0; r < 9; r++)
@@ -79,48 +85,46 @@ function doneAndValid(b) {
 class Board {
     constructor(board) {
         this._b = board;
-        this._depth = 0;
     }
 
     print() {
-        this._b.forEach((row) => {
-            console.log(Array(...row).join(" "));
-        })        
+        Print(this._b);
     }
     
     validateBoard() {
         return ValidateBoard(this._b);
     }
 
-    _solve() {
+    _solve(depth = 0) {
         for (var r = 0; r < 9; r++) for (var c = 0; c < 9; c++) if (this._b[r][c] < 1) {
             var sol = solutions(this._b, r, c);
             if (sol.length == 0) return false;
             if (sol.length == 1) {
                 this._b[r][c] = sol.pop();
+
                 return true;
             }
         }
-        return this._backtrack();
+        return this._backtrack(depth+1);
     }
 
-    _backtrack() {
+    _backtrack(depth) {
         var sol = []
         for (const [r, c] of iter_rc()) if (this._b[r][c] == 0) sol.push([r, c, solutions(this._b, r, c)]);
-        var s = Array(...sol).sort((l, r) => {
+        var ss = Array(...sol).sort((l, r) => {
             var a = l[2].length, b = r[2].length;
             return a < b ? -1 : a == b ? 0 : 1;
-        })[0]
+        })
+        if (ss.length == 0) return false;
+        var s = ss[0];
         var backup = this.getBackup();
         var r = s[0], c = s[1], opts = s[2];
-        this._depth++;
-        opts.forEach((v) => {
+        for (var i = 0; i < opts.length; i++) {
+            var v = opts[i];
             this._b[r][c] = v;
-            if (this.Solve()) {
-                return true;
-            }
+            if (this.Solve(depth)) return true;
             else this.reset(backup);
-        })
+        }
         return false;
     }
 
@@ -134,9 +138,10 @@ class Board {
         for (var i = 0; i < 9; i++) this._b[i] = [...to[i]];
     }
 
-    Solve() {
-        var i = 0;
-        while (!doneAndValid(this._b)) if (!this._solve()) break;
+    Solve(depth = 0) {
+        // console.log("Solve at depth %d", depth);
+        while (!doneAndValid(this._b)) if (!this._solve(depth)) break;
+        // console.log("doneAndValid %s depth %d", doneAndValid(this._b), depth);
         return doneAndValid(this._b);
     }
 
